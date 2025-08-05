@@ -139,25 +139,63 @@ class OpenAITTSEntity(TextToSpeechEntity):
                 with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_file:
                     merged_output_path = out_file.name
 
+                # if normalize_audio:
+                #     _LOGGER.debug("Both chime and normalization enabled; " +
+                #                   "using filter_complex to normalize TTS audio and merge with chime in one pass.")
+                #     # Use filter_complex to normalize the TTS audio and then concatenate with the chime.
+                #     # First input: chime audio, second input: TTS audio (to be normalized).
+                #     cmd = [
+                #         "ffmpeg",
+                #         "-y",
+                #         "-i", chime_path,
+                #         "-i", tts_path,
+                #         "-filter_complex", "[1:a]loudnorm=I=-16:TP=-1:LRA=5[tts_norm]; [0:a][tts_norm]concat=n=2:v=0:a=1[out]",
+                #         "-map", "[out]",
+                #         "-ac", "1",
+                #         "-ar", "24000",
+                #         "-b:a", "128k",
+                #         "-preset", "superfast",
+                #         "-threads", "4",
+                #         merged_output_path,
+                #     ]
+                #     _LOGGER.debug("Executing ffmpeg command: %s", " ".join(cmd))
+                #     subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 if normalize_audio:
-                    _LOGGER.debug("Both chime and normalization enabled; " +
-                                  "using filter_complex to normalize TTS audio and merge with chime in one pass.")
-                    # Use filter_complex to normalize the TTS audio and then concatenate with the chime.
-                    # First input: chime audio, second input: TTS audio (to be normalized).
+                    _LOGGER.debug(
+                        "Normalising TTS, resampling both inputs to 16 kHz, "
+                        "then concatenating chime → TTS in one pass."
+                    )
+                
                     cmd = [
-                        "ffmpeg",
-                        "-y",
+                        "ffmpeg", "-y",
+                        # input-0  → chime
                         "-i", chime_path,
+                        # input-1  → TTS
                         "-i", tts_path,
-                        "-filter_complex", "[1:a]loudnorm=I=-16:TP=-1:LRA=5[tts_norm]; [0:a][tts_norm]concat=n=2:v=0:a=1[out]",
+                
+                        # ── filter_complex ───────────────────────────────────────────
+                        # 1. resample both inputs to 16 kHz mono
+                        # 2. loudnorm on the TTS branch
+                        # 3. concat the two streams
+                        "-filter_complex",
+                        (
+                            "[0:a]aresample=16000,pan=mono|c0=c0[chime];"
+                            "[1:a]aresample=16000,pan=mono|c0=c0,loudnorm=I=-16:TP=-1:LRA=5[tts_norm];"
+                            "[chime][tts_norm]concat=n=2:v=0:a=1[out]"
+                        ),
+                        # map the finished audio
                         "-map", "[out]",
+                
+                        # output settings must match the filter’s rate/channels
                         "-ac", "1",
-                        "-ar", "24000",
+                        "-ar", "16000",
                         "-b:a", "128k",
+                
                         "-preset", "superfast",
                         "-threads", "4",
                         merged_output_path,
                     ]
+                
                     _LOGGER.debug("Executing ffmpeg command: %s", " ".join(cmd))
                     subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 else:
