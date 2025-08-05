@@ -152,7 +152,7 @@ class OpenAITTSEntity(TextToSpeechEntity):
                         "-filter_complex", "[1:a]loudnorm=I=-16:TP=-1:LRA=5[tts_norm]; [0:a][tts_norm]concat=n=2:v=0:a=1[out]",
                         "-map", "[out]",
                         "-ac", "1",
-                        "-ar", "24000",
+                        "-ar", "16000",
                         "-b:a", "128k",
                         "-preset", "superfast",
                         "-threads", "4",
@@ -175,7 +175,7 @@ class OpenAITTSEntity(TextToSpeechEntity):
                         "-safe", "0",
                         "-i", list_path,
                         "-ac", "1",
-                        "-ar", "24000",
+                        "-ar", "16000",
                         "-b:a", "128k",
                         "-preset", "superfast",
                         "-threads", "4",
@@ -198,7 +198,7 @@ class OpenAITTSEntity(TextToSpeechEntity):
                     os.remove(merged_output_path)
                 except Exception:
                     pass
-                return "mp3", final_audio
+                return "wav", final_audio
 
             else:
                 # Chime disabled.
@@ -214,7 +214,7 @@ class OpenAITTSEntity(TextToSpeechEntity):
                         "-y",
                         "-i", norm_input_path,
                         "-ac", "1",
-                        "-ar", "24000",
+                        "-ar", "16000",
                         "-b:a", "128k",
                         "-preset", "superfast",
                         "-threads", "4",
@@ -232,12 +232,12 @@ class OpenAITTSEntity(TextToSpeechEntity):
                         os.remove(norm_output_path)
                     except Exception:
                         pass
-                    return "mp3", normalized_audio
+                    return "wav", normalized_audio
                 else:
-                    _LOGGER.debug("Chime and normalization disabled; returning TTS MP3 audio only.")
+                    _LOGGER.debug("Chime and normalization disabled; returning TTS wav audio only.")
                     overall_duration = (time.monotonic() - overall_start) * 1000
                     _LOGGER.debug("Overall TTS processing time: %.2f ms", overall_duration)
-                    return "mp3", audio_content
+                    return "wav", audio_content
 
         except CancelledError as ce:
             _LOGGER.exception("TTS task cancelled")
