@@ -42,7 +42,8 @@ class OpenAITTSEngine:
             "model": self._model,
             "input": text,
             "voice": voice,
-            "response_format": "mp3",
+            "response_format": "wav",
+            "sample_rate": "16000",
             "speed": speed
         }
         if instructions is not None and self._model == "gpt-4o-mini-tts":
