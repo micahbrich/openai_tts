@@ -122,21 +122,21 @@ class OpenAITTSEntity(TextToSpeechEntity):
 
             if chime_enabled:
                 # Write TTS audio to a temp file.
-                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tts_file:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tts_file:
                     tts_file.write(audio_content)
                     tts_path = tts_file.name
                 _LOGGER.debug("TTS audio written to temp file: %s", tts_path)
 
                 # Determine chime file path - check options first, then fall back to configured chime sound
-                chime_file = options.get(CONF_CHIME_SOUND, self._config.options.get(CONF_CHIME_SOUND, self._config.data.get(CONF_CHIME_SOUND, "threetone.mp3")))
-                # If no .mp3 extension, append it
-                if not chime_file.lower().endswith('.mp3'):
-                    chime_file = f"{chime_file}.mp3"
+                chime_file = options.get(CONF_CHIME_SOUND, self._config.options.get(CONF_CHIME_SOUND, self._config.data.get(CONF_CHIME_SOUND, "threetone.wav")))
+                # If no .wav extension, append it
+                if not chime_file.lower().endswith('.wav'):
+                    chime_file = f"{chime_file}.wav"
                 chime_path = os.path.join(os.path.dirname(__file__), "chime", chime_file)
                 _LOGGER.debug("Using chime file at: %s", chime_path)
 
                 # Create a temporary output file.
-                with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as out_file:
+                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_file:
                     merged_output_path = out_file.name
 
                 if normalize_audio:
@@ -204,10 +204,10 @@ class OpenAITTSEntity(TextToSpeechEntity):
                 # Chime disabled.
                 if normalize_audio:
                     _LOGGER.debug("Normalization enabled without chime; processing TTS audio via ffmpeg.")
-                    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as tts_file:
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tts_file:
                         tts_file.write(audio_content)
                         norm_input_path = tts_file.name
-                    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as out_file:
+                    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as out_file:
                         norm_output_path = out_file.name
                     cmd = [
                         "ffmpeg",
